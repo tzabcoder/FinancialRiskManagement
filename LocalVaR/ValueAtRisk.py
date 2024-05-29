@@ -5,7 +5,7 @@ import numpy as np
 * VaR - Value at Risk
 *
 * Descritption:
-* This class calculates the value at risk for any given portfolio
+* This class calculates the local value at risk (VaR) for any given portfolio
 * and its corresponding weights in percentage terms.
 * The VaR class calculates the total VaR, individual VaR, marginal VaR,
 * and component VaR.
