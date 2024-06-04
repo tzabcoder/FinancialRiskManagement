@@ -126,7 +126,7 @@ class MonteCarloEngine:
     *
     * NOTE: The column names correspond to the timeseried (priceMatrix) column names.
     """
-    def _SimulatePriceData(self):
+    def _SimulatePriceData(self, symbol=None):
         _simulatedPrices = {}
 
         stddevIdx = 0 # index for tracking correct standard deviation
@@ -146,19 +146,54 @@ class MonteCarloEngine:
             _simulatedPrices[col] = _prices
             stddevIdx += 1
 
-        self._simulatedPriceData = pd.DataFrame.from_dict(_simulatedPrices)
+        if symbol == None:
+            return pd.DataFrame.from_dict(_simulatedPrices)
+        else:
+            return pd.DataFrame.from_dict(_simulatedPrices)[symbol]
 
     """
     * Simulate() : public
     *
-    * Runs the monte carlo simulation for the input data.
+    * Runs the monte carlo simulation for the input data. If there are specified input
+    * parameters, the simulation will run according to the inputs.
+    * @param[in] symbol(string, optional) - symbol to create additional simulations for
+    *               Default Value: None
+    * @param[in] nSims(int, optional)     - number of additional simulations to conduct
+    *               Default Value: 1
     * @return _simulatedPriceData(pd.DataFrame)
     """
     def Simulate(self, symbol=None, nSims=1):
-        self._CreateRandomReturns()     # Create random returns for each asset in the price matrix
-        self._CreateCorrelationMatrix() # Calculate the correlations from the random returns
-        self._CholeskyDecomposition()   # Decompose the correlation matrix through the Cholesky Factorization
-        self._TransformRandomReturns()  # Transform returns by multiplying the random returns by the factorized matrix
-        self._SimulatePriceData()       # Simulate the price data
+        simulatedPriceData = None
 
-        return self._simulatedPriceData
+        # Validate we can process the number of simulations
+        if nSims <= 0 or nSims > 1000:
+            return simulatedPriceData
+
+        # Calculate the VaR for 1 simulation for initial symbols
+        if symbol == None:
+            self._CreateRandomReturns()     # Create random returns for each asset in the price matrix
+            self._CreateCorrelationMatrix() # Calculate the correlations from the random returns
+            self._CholeskyDecomposition()   # Decompose the correlation matrix through the Cholesky Factorization
+            self._TransformRandomReturns()  # Transform returns by multiplying the random returns by the factorized matrix
+
+            simulatedPriceData = self._SimulatePriceData() # Simulate price data
+
+        if symbol in self._returnMatrix.columns:
+            simulatedPriceData = pd.DataFrame()
+            simColumns = []
+
+            # Caculate VaR for n simulations for specified symbol
+            for s in range(nSims):
+                self._CreateRandomReturns()     # Create random returns for each asset in the price matrix
+                self._CreateCorrelationMatrix() # Calculate the correlations from the random returns
+                self._CholeskyDecomposition()   # Decompose the correlation matrix through the Cholesky Factorization
+                self._TransformRandomReturns()  # Transform returns by multiplying the random returns by the factorized matrix
+
+                # Simulate price data and add to dataframe
+                simulatedPriceData = pd.concat([simulatedPriceData, self._SimulatePriceData(symbol)], axis=1)
+
+                simColumns.append(f"{symbol}_{s}")
+
+            simulatedPriceData.columns = simColumns
+
+        return simulatedPriceData
