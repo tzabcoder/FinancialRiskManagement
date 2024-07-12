@@ -8,8 +8,8 @@ NOTE: The version of the package is not particular (this was developed using the
 - scipy
 
 ## MonteCarloEngine.py Usage
-The monte carlo engine is a framework for conducting monte carlo simulations on the portfolio level, using correlation matrices and the Cholesky Factorization technique.
-Simulated price data is based on the following equation:
+The monte carlo engine is a framework for conducting monte carlo simulations on the portfolio price, using correlation matrices and the Cholesky Factorization technique.
+Simulated portfolio price data is based on the following equation:
 
 current price = previous price * e^(sigma * sqrt(1) * current transformed return)
 
